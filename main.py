@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, Column, Integer, Float
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 import random
 
-# ================= DATABASE SETUP =================
+# ================= DATABASE =================
 
 DATABASE_URL = "sqlite:///./wellness.db"
 
@@ -34,6 +34,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+# ✅ CORS (IMPORTANT FOR DEPLOYMENT)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -42,16 +43,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ================= MODEL =================
+# ================= REQUEST MODEL =================
 
 class Log(BaseModel):
-    mood: int
-    sleep: float
-    work_hours: float
-    screen_time: float
+    mood: int = Field(..., ge=1, le=5)
+    sleep: float = Field(..., ge=0)
+    work_hours: float = Field(..., ge=0)
+    screen_time: float = Field(..., ge=0)
 
-
-# ✅ ADD HERE (just below Log model)
+# ================= RESPONSE MODEL =================
 
 class LogResponse(BaseModel):
     status: str
@@ -151,11 +151,11 @@ def home():
     return {"message": "Wellness AI is running 🚀"}
 
 
-@app.post("/log",response_model=LogResponse)
+@app.post("/log", response_model=LogResponse)
 def create_log(log: Log):
     db: Session = SessionLocal()
 
-    # ✅ Save to database
+    # ✅ Save to DB
     new_entry = LogDB(
         mood=log.mood,
         sleep=log.sleep,
